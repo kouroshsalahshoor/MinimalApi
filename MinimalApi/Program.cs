@@ -24,6 +24,13 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories().ToList()));
+app.MapGet("/api/categories/{id:int}", (int id) =>
+{
+    var model = CategoriesStore.Categories().FirstOrDefault(x => x.Id == id);
+    if (model == null)
+        return Results.NotFound();
+    return Results.Ok(model);
+});
 
 app.MapGet("/", () => Results.Ok(">>> get"));
 app.MapGet("/{id:int}", (int id) =>

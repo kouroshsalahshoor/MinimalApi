@@ -4,6 +4,10 @@ GET {{MinimalApi_HostAddress}}/api/categories
 Accept: application/json
 
 ###
+GET {{MinimalApi_HostAddress}}/api/categories/5
+Accept: application/json
+
+###
 GET {{MinimalApi_HostAddress}}/ 
 Accept: application/json
 
