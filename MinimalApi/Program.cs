@@ -24,6 +24,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.MapGet("/", () => ">>> get");
+app.MapPost("/", () => ">>> post");
 
 
 var scopeRequiredByApi = app.Configuration["AzureAd:Scopes"] ?? "";
