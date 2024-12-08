@@ -24,7 +24,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/", () => ">>> get");
+app.MapGet("/", () => Results.Ok(">>> get"));
+app.MapGet("/{id}", (int id) =>
+{
+    return Results.Ok($">>> id: {id}");
+});
 app.MapPost("/", () => ">>> post");
 
 

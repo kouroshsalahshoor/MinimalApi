@@ -8,6 +8,10 @@ GET {{MinimalApi_HostAddress}}/
 Accept: application/json
 
 ###
+GET {{MinimalApi_HostAddress}}/11
+Accept: application/json
+
+###
 Post {{MinimalApi_HostAddress}}/ 
 Accept: application/json
 
