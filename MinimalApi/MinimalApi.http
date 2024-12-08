@@ -1,6 +1,6 @@
 @MinimalApi_HostAddress = http://localhost:5212
 
-GET {{MinimalApi_HostAddress}}/weatherforecast/
+GET {{MinimalApi_HostAddress}}/api/categories
 Accept: application/json
 
 ###
@@ -13,6 +13,10 @@ Accept: application/json
 
 ###
 Post {{MinimalApi_HostAddress}}/ 
+Accept: application/json
+
+###
+GET {{MinimalApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###

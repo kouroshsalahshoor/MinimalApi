@@ -1,8 +1,7 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Identity.Abstractions;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
+using MinimalApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +22,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories().ToList()));
 
 app.MapGet("/", () => Results.Ok(">>> get"));
 app.MapGet("/{id:int}", (int id) =>
