@@ -25,7 +25,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories.ToList())).WithName("GetCategories");
+app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories.ToList())).WithName("GetCategories")
+        .Produces<List<Category>>(StatusCodes.Status200OK)
+        ;
 app.MapGet("/api/category/{id:int}", (int id) =>
 {
     if (id < 1)
@@ -38,25 +40,31 @@ app.MapGet("/api/category/{id:int}", (int id) =>
         return Results.NotFound();
     return Results.Ok(model);
 })
-    .WithName("GetCategory");
+    .WithName("GetCategory")
+    .Produces<Category>(StatusCodes.Status200OK)
+    .Produces<Category>(StatusCodes.Status400BadRequest)
+    ;
 app.MapPost("/api/category", ([FromBody] Category model) =>
 {
     if (model.Id != 0 || string.IsNullOrEmpty(model.Name))
     {
         return Results.BadRequest("Invalid");
     }
-    if (CategoriesStore.Categories.Any(x=> x.Name.ToLower() == model.Name.ToLower()))
+    if (CategoriesStore.Categories.Any(x => x.Name.ToLower() == model.Name.ToLower()))
     {
         return Results.BadRequest("Name already exists");
     }
-    model.Id = CategoriesStore.Categories.OrderByDescending(x=> x.Id).FirstOrDefault()!.Id + 1;
+    model.Id = CategoriesStore.Categories.OrderByDescending(x => x.Id).FirstOrDefault()!.Id + 1;
     model.CreatedBy = "x";
     model.CreatedOn = DateTime.Now;
     CategoriesStore.Categories.Add(model);
-    return Results.CreatedAtRoute("getcategory", new {id = model.Id}, model);
+    return Results.CreatedAtRoute("getcategory", new { id = model.Id }, model);
     //return Results.Created($"/api/category/{model.Id}", model);
 })
-    .WithName("CreateCategory");
+    .WithName("CreateCategory")
+    .Produces<Category>(StatusCodes.Status201Created)
+    .Produces<Category>(StatusCodes.Status400BadRequest)
+    ;
 app.MapPut("/api/category", () =>
 {
 });
