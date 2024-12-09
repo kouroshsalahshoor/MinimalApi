@@ -64,6 +64,7 @@ app.MapPost("/api/category", ([FromBody] Category model) =>
     .WithName("CreateCategory")
     .Produces<Category>(StatusCodes.Status201Created)
     .Produces<Category>(StatusCodes.Status400BadRequest)
+    .Accepts<Category>("application/json")
     ;
 app.MapPut("/api/category", () =>
 {
