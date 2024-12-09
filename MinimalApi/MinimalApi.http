@@ -1,11 +1,23 @@
-@MinimalApi_HostAddress = http://localhost:5212
+@MinimalApi_HostAddress = https://localhost:7153
+
+# https://learn.microsoft.com/en-us/aspnet/core/tutorials/min-web-api?view=aspnetcore-9.0&tabs=visual-studio
 
 GET {{MinimalApi_HostAddress}}/api/categories
 Accept: application/json
 
 ###
-GET {{MinimalApi_HostAddress}}/api/categories/5
+GET {{MinimalApi_HostAddress}}/api/category/4
 Accept: application/json
+
+###
+Post {{MinimalApi_HostAddress}}/api/category
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "xxx"
+}
 
 ###
 GET {{MinimalApi_HostAddress}}/ 
@@ -24,3 +36,4 @@ GET {{MinimalApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
