@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
 using MinimalApi.Data;
+using MinimalApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,14 +25,42 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories().ToList()));
+app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories.ToList()));
 app.MapGet("/api/categories/{id:int}", (int id) =>
 {
-    var model = CategoriesStore.Categories().FirstOrDefault(x => x.Id == id);
+    if (id < 1)
+    {
+        return Results.BadRequest("Invalid");
+    }
+
+    var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
     if (model == null)
         return Results.NotFound();
     return Results.Ok(model);
 });
+app.MapPost("/api/category", ([FromBody] Category model) =>
+{
+    if (model.Id != 0 || string.IsNullOrEmpty(model.Name))
+    {
+        return Results.BadRequest("Invalid");
+    }
+    if (CategoriesStore.Categories.Any(x=> x.Name.ToLower() == model.Name.ToLower()))
+    {
+        return Results.BadRequest("Name already exists");
+    }
+    model.Id = CategoriesStore.Categories.OrderByDescending(x=> x.Id).FirstOrDefault()!.Id + 1;
+    model.CreatedBy = "x";
+    model.CreatedOn = DateTime.Now;
+    CategoriesStore.Categories.Add(model);
+    return Results.Ok(model);
+});
+app.MapPut("/api/category", () =>
+{
+});
+app.MapDelete("/api/categories/{id:int}", (int id) =>
+{
+});
+
 
 app.MapGet("/", () => Results.Ok(">>> get"));
 app.MapGet("/{id:int}", (int id) =>
