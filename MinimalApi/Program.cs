@@ -4,6 +4,7 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
 using MinimalApi.Data;
 using MinimalApi.Models;
+using MinimalApi.Models.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,27 +49,38 @@ app.MapGet("/api/category/{id:int}", (int id) =>
     .Produces<Category>(StatusCodes.Status200OK)
     .Produces<Category>(StatusCodes.Status400BadRequest)
     ;
-app.MapPost("/api/category", ([FromBody] Category model) =>
+app.MapPost("/api/category", ([FromBody] CategoryCreateDto dto) =>
 {
-    if (model.Id != 0 || string.IsNullOrEmpty(model.Name))
+    if (string.IsNullOrEmpty(dto.Name))
     {
         return Results.BadRequest("Invalid");
     }
-    if (CategoriesStore.Categories.Any(x => x.Name.ToLower() == model.Name.ToLower()))
+    if (CategoriesStore.Categories.Any(x => x.Name.ToLower() == dto.Name.ToLower()))
     {
         return Results.BadRequest("Name already exists");
     }
+
+    var model = new Category();
+
     model.Id = CategoriesStore.Categories.OrderByDescending(x => x.Id).FirstOrDefault()!.Id + 1;
+    model.Name = dto.Name;
     model.CreatedBy = "x";
     model.CreatedOn = DateTime.Now;
     CategoriesStore.Categories.Add(model);
-    return Results.CreatedAtRoute("getcategory", new { id = model.Id }, model);
+
+    var categoryDto = new CategoryDto
+    {
+        Id = model.Id,
+        Name = dto.Name,
+    };
+
+    return Results.CreatedAtRoute("getcategory", new { id = categoryDto.Id }, categoryDto);
     //return Results.Created($"/api/category/{model.Id}", model);
 })
     .WithName("CreateCategory")
-    .Produces<Category>(StatusCodes.Status201Created)
-    .Produces<Category>(StatusCodes.Status400BadRequest)
-    .Accepts<Category>("application/json")
+    .Accepts<CategoryCreateDto>("application/json")
+    .Produces<CategoryDto>(StatusCodes.Status201Created)
+    .Produces<CategoryDto>(StatusCodes.Status400BadRequest)
     ;
 app.MapPut("/api/category", () =>
 {
