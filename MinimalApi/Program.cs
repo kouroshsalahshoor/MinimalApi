@@ -42,10 +42,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", (ILogger<Program> _logger, IMapper _mapper) =>
+app.MapGet("/api/categories", async (ApplicationDbContext _db, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, ">>> Get /api/categories");
-    var models = CategoriesStore.Categories.ToList();
+    var models = await _db.Categories.ToListAsync();
 
     var apiResponse = new ApiResponse();
     apiResponse.IsSuccessful = true;
@@ -56,7 +56,7 @@ app.MapGet("/api/categories", (ILogger<Program> _logger, IMapper _mapper) =>
 }).WithName("GetCategories")
         .Produces<List<ApiResponse>>(StatusCodes.Status200OK)
         ;
-app.MapGet("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper _mapper) =>
+app.MapGet("/api/category/{id:int}", (ApplicationDbContext _db, int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, $">>> Get /api/category/{id}");
 
@@ -70,7 +70,7 @@ app.MapGet("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper 
     }
     else
     {
-        var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
+        var model = _db.Categories.FirstOrDefault(x => x.Id == id);
         if (model == null)
         {
             apiResponse.StatusCode = HttpStatusCode.NotFound;
@@ -92,6 +92,7 @@ app.MapGet("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper 
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPost("/api/category", async (
+    ApplicationDbContext _db,
     [FromBody] CategoryCreateDto dto,
     ILogger<Program> _logger,
     IMapper _mapper,
@@ -116,7 +117,7 @@ app.MapPost("/api/category", async (
         apiResponse.Errors.Add("Invalid");
         return Results.BadRequest(apiResponse);
     }
-    if (CategoriesStore.Categories.Any(x => x.Name.ToLower() == dto.Name.ToLower()))
+    if (_db.Categories.Any(x => x.Name.ToLower() == dto.Name.ToLower()))
     {
         apiResponse.Errors.Add("Name already exists");
         return Results.BadRequest(apiResponse);
@@ -124,10 +125,10 @@ app.MapPost("/api/category", async (
 
     var model = _mapper.Map<Category>(dto);
 
-    model.Id = CategoriesStore.Categories.OrderByDescending(x => x.Id).FirstOrDefault()!.Id + 1;
     model.CreatedBy = "x";
     model.CreatedOn = DateTime.Now;
-    CategoriesStore.Categories.Add(model);
+    await _db.Categories.AddAsync(model);
+    await _db.SaveChangesAsync();
 
     var categoryDto = _mapper.Map<CategoryDto>(model);
 
@@ -146,6 +147,7 @@ app.MapPost("/api/category", async (
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPut("/api/category", async (
+    ApplicationDbContext _db,
     [FromBody] CategoryUpdateDto dto,
     ILogger<Program> _logger,
     IMapper _mapper,
@@ -170,17 +172,20 @@ app.MapPut("/api/category", async (
         apiResponse.Errors.Add("Invalid");
         return Results.BadRequest(apiResponse);
     }
-    if (CategoriesStore.Categories.Any(x => x.Id != dto.Id && x.Name.ToLower() == dto.Name.ToLower()))
+    if (await _db.Categories.AnyAsync(x => x.Id != dto.Id && x.Name.ToLower() == dto.Name.ToLower()))
     {
         apiResponse.Errors.Add("Name already exists");
         return Results.BadRequest(apiResponse);
     }
 
-    var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == dto.Id);
+    var model = await _db.Categories.FirstOrDefaultAsync(x => x.Id == dto.Id);
 
     model!.Name = dto.Name;
     model.LastModifiedBy = "x";
     model.LastModifiedOn = DateTime.Now;
+
+    _db.Categories.Update(model);
+    await _db.SaveChangesAsync();
 
     apiResponse.IsSuccessful = true;
     apiResponse.StatusCode = HttpStatusCode.OK;
@@ -193,7 +198,7 @@ app.MapPut("/api/category", async (
     .Produces<ApiResponse>(StatusCodes.Status200OK)
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
-app.MapDelete("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper _mapper) =>
+app.MapDelete("/api/category/{id:int}", async (ApplicationDbContext _db, int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, $">>> Delete /api/category/{id}");
 
@@ -207,7 +212,7 @@ app.MapDelete("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapp
     }
     else
     {
-        var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
+        var model = await _db.Categories.FirstOrDefaultAsync(x => x.Id == id);
         if (model == null)
         {
             apiResponse.StatusCode = HttpStatusCode.NotFound;
@@ -216,7 +221,9 @@ app.MapDelete("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapp
         }
         else
         {
-            CategoriesStore.Categories.Remove(model);
+            _db.Categories.Remove(model);
+            await _db.SaveChangesAsync();
+
             apiResponse.IsSuccessful = true;
             apiResponse.Result = _mapper.Map<CategoryDto>(model);
             apiResponse.StatusCode = HttpStatusCode.NoContent;

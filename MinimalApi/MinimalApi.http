@@ -6,7 +6,7 @@ GET {{MinimalApi_HostAddress}}/api/categories
 Accept: application/json
 
 ###
-GET {{MinimalApi_HostAddress}}/api/category/4
+GET {{MinimalApi_HostAddress}}/api/category/1
 Accept: application/json
 
 ###
@@ -25,12 +25,12 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "id": 4,
-  "name": "4444"
+  "id": 1,
+  "name": "1"
 }
 
 ###
-Delete {{MinimalApi_HostAddress}}/api/category/4
+Delete {{MinimalApi_HostAddress}}/api/category/1
 Accept: application/json
 
 ###
