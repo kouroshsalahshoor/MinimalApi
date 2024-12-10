@@ -36,15 +36,19 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", (ILogger<Program> _logger) =>
+app.MapGet("/api/categories", (ILogger<Program> _logger, IMapper _mapper) =>
 {
-    _logger.Log(LogLevel.Information, ">>> /api/categories");
-    return Results.Ok(CategoriesStore.Categories.ToList());
+    _logger.Log(LogLevel.Information, ">>> Get /api/categories");
+    var models = CategoriesStore.Categories.ToList();
+
+    return Results.Ok(_mapper.Map<List<CategoryDto>>(models));
 }).WithName("GetCategories")
-        .Produces<List<Category>>(StatusCodes.Status200OK)
+        .Produces<List<CategoryDto>>(StatusCodes.Status200OK)
         ;
-app.MapGet("/api/category/{id:int}", (int id) =>
+app.MapGet("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
+    _logger.Log(LogLevel.Information, $">>> Get /api/category/{id}");
+
     if (id < 1)
     {
         return Results.BadRequest("Invalid");
@@ -53,18 +57,21 @@ app.MapGet("/api/category/{id:int}", (int id) =>
     var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
     if (model == null)
         return Results.NotFound();
-    return Results.Ok(model);
+    return Results.Ok(_mapper.Map<CategoryDto>(model));
 })
     .WithName("GetCategory")
-    .Produces<Category>(StatusCodes.Status200OK)
-    .Produces<Category>(StatusCodes.Status400BadRequest)
+    .Produces<CategoryDto>(StatusCodes.Status200OK)
+    .Produces<CategoryDto>(StatusCodes.Status400BadRequest)
     ;
 app.MapPost("/api/category", async (
-    [FromBody] CategoryCreateDto dto, 
+    [FromBody] CategoryCreateDto dto,
+    ILogger < Program > _logger,
     IMapper _mapper,
     IValidator<CategoryCreateDto> _validator
     ) =>
 {
+    _logger.Log(LogLevel.Information, $">>> Post /api/category");
+
     var validationResult = await _validator.ValidateAsync(dto);
     if (validationResult.IsValid == false)
     {
