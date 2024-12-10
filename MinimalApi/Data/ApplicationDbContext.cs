@@ -11,13 +11,17 @@ namespace MinimalApi.Data
 
         public DbSet<Category> Categories { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
-        {
-            base.OnModelCreating(modelBuilder);
+        //protected override void OnModelCreating(ModelBuilder modelBuilder)
+        //{
+        //    base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Category>().HasData(
-                CategoriesStore.Categories
-            );
-        }
+        //    var now = DateTime.Now;
+
+        //    modelBuilder.Entity<Category>().HasData(
+        //       new Category() { Id = 1, Name = "1", CreatedBy = "1", CreatedOn = now },
+        //       new Category() { Id = 2, Name = "2", CreatedBy = "2", CreatedOn = now },
+        //       new Category() { Id = 3, Name = "3", CreatedBy = "3", CreatedOn = now }
+        //    );
+        //}
     }
 }
