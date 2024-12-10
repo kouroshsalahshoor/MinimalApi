@@ -10,6 +10,8 @@ using MinimalApi.Models;
 using MinimalApi.Models.Dtos;
 using MinimalApi.Utilities;
 using MinimalApi.Validations;
+using System.Net;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,55 +38,85 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
 app.MapGet("/api/categories", (ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, ">>> Get /api/categories");
     var models = CategoriesStore.Categories.ToList();
 
-    return Results.Ok(_mapper.Map<List<CategoryDto>>(models));
+    var apiResponse = new ApiResponse();
+    apiResponse.IsSuccessful = true;
+    apiResponse.Result = _mapper.Map<List<CategoryDto>>(models);
+    apiResponse.StatusCode = HttpStatusCode.OK;
+
+    return Results.Ok(apiResponse);
 }).WithName("GetCategories")
-        .Produces<List<CategoryDto>>(StatusCodes.Status200OK)
+        .Produces<List<ApiResponse>>(StatusCodes.Status200OK)
         ;
 app.MapGet("/api/category/{id:int}", (int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, $">>> Get /api/category/{id}");
 
+    var apiResponse = new ApiResponse();
+    apiResponse.IsSuccessful = false;
     if (id < 1)
     {
-        return Results.BadRequest("Invalid");
+        apiResponse.StatusCode = HttpStatusCode.BadRequest;
+        apiResponse.Errors.Add("Id is zero or negative");
+        return Results.BadRequest(apiResponse);
+    }
+    else
+    {
+        var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
+        if (model == null)
+        {
+            apiResponse.StatusCode = HttpStatusCode.NotFound;
+            return Results.NotFound(apiResponse);
+        }
+        else
+        {
+            apiResponse.IsSuccessful = true;
+            apiResponse.Result = _mapper.Map<CategoryDto>(model);
+            apiResponse.StatusCode = HttpStatusCode.OK;
+        }
     }
 
-    var model = CategoriesStore.Categories.FirstOrDefault(x => x.Id == id);
-    if (model == null)
-        return Results.NotFound();
-    return Results.Ok(_mapper.Map<CategoryDto>(model));
+    return Results.Ok(apiResponse);
 })
     .WithName("GetCategory")
-    .Produces<CategoryDto>(StatusCodes.Status200OK)
-    .Produces<CategoryDto>(StatusCodes.Status400BadRequest)
+    .Produces<ApiResponse>(StatusCodes.Status200OK)
+    .Produces<ApiResponse>(StatusCodes.Status404NotFound)
+    .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPost("/api/category", async (
     [FromBody] CategoryCreateDto dto,
-    ILogger < Program > _logger,
+    ILogger<Program> _logger,
     IMapper _mapper,
     IValidator<CategoryCreateDto> _validator
     ) =>
 {
     _logger.Log(LogLevel.Information, $">>> Post /api/category");
 
+    var apiResponse = new ApiResponse();
+    apiResponse.IsSuccessful = false;
+    apiResponse.StatusCode = HttpStatusCode.BadRequest;
+
     var validationResult = await _validator.ValidateAsync(dto);
     if (validationResult.IsValid == false)
     {
-        return Results.BadRequest(validationResult.Errors.FirstOrDefault()!.ToString());
+        apiResponse.Errors = validationResult.Errors.Select(x=> x.ErrorMessage).ToList();
+        return Results.BadRequest(apiResponse);
     }
 
     if (string.IsNullOrEmpty(dto.Name))
     {
-        return Results.BadRequest("Invalid");
+        apiResponse.Errors.Add("Invalid");
+        return Results.BadRequest(apiResponse);
     }
     if (CategoriesStore.Categories.Any(x => x.Name.ToLower() == dto.Name.ToLower()))
     {
-        return Results.BadRequest("Name already exists");
+        apiResponse.Errors.Add("Name already exists");
+        return Results.BadRequest(apiResponse);
     }
 
     var model = _mapper.Map<Category>(dto);
@@ -96,13 +128,19 @@ app.MapPost("/api/category", async (
 
     var categoryDto = _mapper.Map<CategoryDto>(model);
 
-    return Results.CreatedAtRoute("getcategory", new { id = categoryDto.Id }, categoryDto);
+    apiResponse.IsSuccessful = true;
+    apiResponse.StatusCode = HttpStatusCode.Created;
+    apiResponse.Result = categoryDto;
+
+    return Results.Ok(apiResponse);
+    //return Results.CreatedAtRoute("getcategory", new { id = categoryDto.Id }, categoryDto);
     //return Results.Created($"/api/category/{model.Id}", model);
 })
     .WithName("CreateCategory")
     .Accepts<CategoryCreateDto>("application/json")
-    .Produces<CategoryDto>(StatusCodes.Status201Created)
-    .Produces<CategoryDto>(StatusCodes.Status400BadRequest)
+    .Produces<ApiResponse>(StatusCodes.Status200OK)
+    //.Produces<ApiResponse>(StatusCodes.Status201Created)
+    .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPut("/api/category", () =>
 {
