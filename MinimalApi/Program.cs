@@ -1,3 +1,4 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
@@ -5,6 +6,7 @@ using Microsoft.Identity.Web.Resource;
 using MinimalApi.Data;
 using MinimalApi.Models;
 using MinimalApi.Models.Dtos;
+using MinimalApi.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +17,8 @@ builder.Services.AddAuthorization();
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddAutoMapper(typeof(MapperProfile));
 
 var app = builder.Build();
 
@@ -49,7 +53,7 @@ app.MapGet("/api/category/{id:int}", (int id) =>
     .Produces<Category>(StatusCodes.Status200OK)
     .Produces<Category>(StatusCodes.Status400BadRequest)
     ;
-app.MapPost("/api/category", ([FromBody] CategoryCreateDto dto) =>
+app.MapPost("/api/category", ([FromBody] CategoryCreateDto dto, IMapper _mapper) =>
 {
     if (string.IsNullOrEmpty(dto.Name))
     {
@@ -60,19 +64,14 @@ app.MapPost("/api/category", ([FromBody] CategoryCreateDto dto) =>
         return Results.BadRequest("Name already exists");
     }
 
-    var model = new Category();
+    var model = _mapper.Map<Category>(dto);
 
     model.Id = CategoriesStore.Categories.OrderByDescending(x => x.Id).FirstOrDefault()!.Id + 1;
-    model.Name = dto.Name;
     model.CreatedBy = "x";
     model.CreatedOn = DateTime.Now;
     CategoriesStore.Categories.Add(model);
 
-    var categoryDto = new CategoryDto
-    {
-        Id = model.Id,
-        Name = dto.Name,
-    };
+    var categoryDto = _mapper.Map<CategoryDto>(model);
 
     return Results.CreatedAtRoute("getcategory", new { id = categoryDto.Id }, categoryDto);
     //return Results.Created($"/api/category/{model.Id}", model);
