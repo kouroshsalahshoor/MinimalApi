@@ -25,7 +25,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", () => Results.Ok(CategoriesStore.Categories.ToList())).WithName("GetCategories")
+app.MapGet("/api/categories", (ILogger<Program> _logger) =>
+{
+    _logger.Log(LogLevel.Information, ">>> /api/categories");
+    return Results.Ok(CategoriesStore.Categories.ToList());
+}).WithName("GetCategories")
         .Produces<List<Category>>(StatusCodes.Status200OK)
         ;
 app.MapGet("/api/category/{id:int}", (int id) =>
