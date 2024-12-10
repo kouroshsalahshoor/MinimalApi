@@ -20,6 +20,20 @@ Content-Type: application/json
 }
 
 ###
+Put {{MinimalApi_HostAddress}}/api/category
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": 4,
+  "name": "4444"
+}
+
+###
+Delete {{MinimalApi_HostAddress}}/api/category/4
+Accept: application/json
+
+###
 GET {{MinimalApi_HostAddress}}/ 
 Accept: application/json
 
