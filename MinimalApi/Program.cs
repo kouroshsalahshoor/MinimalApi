@@ -1,5 +1,7 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.Resource;
@@ -7,6 +9,7 @@ using MinimalApi.Data;
 using MinimalApi.Models;
 using MinimalApi.Models.Dtos;
 using MinimalApi.Utilities;
+using MinimalApi.Validations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddOpenApi();
 
 builder.Services.AddAutoMapper(typeof(MapperProfile));
+
+builder.Services.AddScoped<IValidator<CategoryCreateDto>, CategoryCreateValidation>();
 
 var app = builder.Build();
 
@@ -53,8 +58,18 @@ app.MapGet("/api/category/{id:int}", (int id) =>
     .Produces<Category>(StatusCodes.Status200OK)
     .Produces<Category>(StatusCodes.Status400BadRequest)
     ;
-app.MapPost("/api/category", ([FromBody] CategoryCreateDto dto, IMapper _mapper) =>
+app.MapPost("/api/category", async (
+    [FromBody] CategoryCreateDto dto, 
+    IMapper _mapper,
+    IValidator<CategoryCreateDto> _validator
+    ) =>
 {
+    var validationResult = await _validator.ValidateAsync(dto);
+    if (validationResult.IsValid == false)
+    {
+        return Results.BadRequest(validationResult.Errors.FirstOrDefault()!.ToString());
+    }
+
     if (string.IsNullOrEmpty(dto.Name))
     {
         return Results.BadRequest("Invalid");
