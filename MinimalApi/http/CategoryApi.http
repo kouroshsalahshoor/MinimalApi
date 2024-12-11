@@ -1,0 +1,32 @@
+@MinimalApi_HostAddress = https://localhost:7153
+
+GET {{MinimalApi_HostAddress}}/api/categories
+Accept: application/json
+
+###
+GET {{MinimalApi_HostAddress}}/api/category/3
+Accept: application/json
+
+###
+Post {{MinimalApi_HostAddress}}/api/category
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": 0,
+  "name": "4"
+}
+
+###
+Put {{MinimalApi_HostAddress}}/api/category
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": 3,
+  "name": "3"
+}
+
+###
+Delete {{MinimalApi_HostAddress}}/api/category/2
+Accept: application/json
