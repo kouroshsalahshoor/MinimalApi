@@ -9,6 +9,8 @@ using Microsoft.Identity.Web.Resource;
 using MinimalApi.Data;
 using MinimalApi.Models;
 using MinimalApi.Models.Dtos;
+using MinimalApi.Repository;
+using MinimalApi.Repository.IRepository;
 using MinimalApi.Utilities;
 using MinimalApi.Validations;
 using System.Net;
@@ -32,6 +34,8 @@ builder.Services.AddAutoMapper(typeof(MapperProfile));
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 //builder.Services.AddScoped<IValidator<CategoryCreateDto>, CategoryCreateValidation>();
 
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -42,10 +46,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/api/categories", async (ApplicationDbContext _db, ILogger<Program> _logger, IMapper _mapper) =>
+app.MapGet("/api/categories", async (ICategoryRepository _repo, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, ">>> Get /api/categories");
-    var models = await _db.Categories.ToListAsync();
+    var models = await _repo.Get();
 
     var apiResponse = new ApiResponse();
     apiResponse.IsSuccessful = true;
@@ -56,7 +60,7 @@ app.MapGet("/api/categories", async (ApplicationDbContext _db, ILogger<Program> 
 }).WithName("GetCategories")
         .Produces<List<ApiResponse>>(StatusCodes.Status200OK)
         ;
-app.MapGet("/api/category/{id:int}", (ApplicationDbContext _db, int id, ILogger<Program> _logger, IMapper _mapper) =>
+app.MapGet("/api/category/{id:int}", async (ICategoryRepository _repo, int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, $">>> Get /api/category/{id}");
 
@@ -70,7 +74,7 @@ app.MapGet("/api/category/{id:int}", (ApplicationDbContext _db, int id, ILogger<
     }
     else
     {
-        var model = _db.Categories.FirstOrDefault(x => x.Id == id);
+        var model = await _repo.Get(id);
         if (model == null)
         {
             apiResponse.StatusCode = HttpStatusCode.NotFound;
@@ -92,7 +96,7 @@ app.MapGet("/api/category/{id:int}", (ApplicationDbContext _db, int id, ILogger<
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPost("/api/category", async (
-    ApplicationDbContext _db,
+    ICategoryRepository _repo,
     [FromBody] CategoryCreateDto dto,
     ILogger<Program> _logger,
     IMapper _mapper,
@@ -117,7 +121,7 @@ app.MapPost("/api/category", async (
         apiResponse.Errors.Add("Invalid");
         return Results.BadRequest(apiResponse);
     }
-    if (_db.Categories.Any(x => x.Name.ToLower() == dto.Name.ToLower()))
+    if ((await _repo.Get(dto.Name)) != null)
     {
         apiResponse.Errors.Add("Name already exists");
         return Results.BadRequest(apiResponse);
@@ -127,8 +131,7 @@ app.MapPost("/api/category", async (
 
     model.CreatedBy = "x";
     model.CreatedOn = DateTime.Now;
-    await _db.Categories.AddAsync(model);
-    await _db.SaveChangesAsync();
+    await _repo.Create(model);
 
     var categoryDto = _mapper.Map<CategoryDto>(model);
 
@@ -147,7 +150,7 @@ app.MapPost("/api/category", async (
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
 app.MapPut("/api/category", async (
-    ApplicationDbContext _db,
+    ICategoryRepository _repo,
     [FromBody] CategoryUpdateDto dto,
     ILogger<Program> _logger,
     IMapper _mapper,
@@ -172,20 +175,19 @@ app.MapPut("/api/category", async (
         apiResponse.Errors.Add("Invalid");
         return Results.BadRequest(apiResponse);
     }
-    if (await _db.Categories.AnyAsync(x => x.Id != dto.Id && x.Name.ToLower() == dto.Name.ToLower()))
+    if ((await _repo.Get()).Any(x => x.Id != dto.Id && x.Name.ToLower() == dto.Name.ToLower()))
     {
         apiResponse.Errors.Add("Name already exists");
         return Results.BadRequest(apiResponse);
     }
 
-    var model = await _db.Categories.FirstOrDefaultAsync(x => x.Id == dto.Id);
+    var model = await _repo.Get(dto.Id);
 
     model!.Name = dto.Name;
     model.LastModifiedBy = "x";
     model.LastModifiedOn = DateTime.Now;
 
-    _db.Categories.Update(model);
-    await _db.SaveChangesAsync();
+    await _repo.Update(model);
 
     apiResponse.IsSuccessful = true;
     apiResponse.StatusCode = HttpStatusCode.OK;
@@ -198,7 +200,7 @@ app.MapPut("/api/category", async (
     .Produces<ApiResponse>(StatusCodes.Status200OK)
     .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
     ;
-app.MapDelete("/api/category/{id:int}", async (ApplicationDbContext _db, int id, ILogger<Program> _logger, IMapper _mapper) =>
+app.MapDelete("/api/category/{id:int}", async (ICategoryRepository _repo, int id, ILogger<Program> _logger, IMapper _mapper) =>
 {
     _logger.Log(LogLevel.Information, $">>> Delete /api/category/{id}");
 
@@ -212,7 +214,7 @@ app.MapDelete("/api/category/{id:int}", async (ApplicationDbContext _db, int id,
     }
     else
     {
-        var model = await _db.Categories.FirstOrDefaultAsync(x => x.Id == id);
+        var model = await _repo.Get(id);
         if (model == null)
         {
             apiResponse.StatusCode = HttpStatusCode.NotFound;
@@ -221,8 +223,7 @@ app.MapDelete("/api/category/{id:int}", async (ApplicationDbContext _db, int id,
         }
         else
         {
-            _db.Categories.Remove(model);
-            await _db.SaveChangesAsync();
+            await _repo.Delete(model);
 
             apiResponse.IsSuccessful = true;
             apiResponse.Result = _mapper.Map<CategoryDto>(model);
