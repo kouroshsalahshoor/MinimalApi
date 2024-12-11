@@ -6,7 +6,7 @@ using MinimalApi.Models;
 using MinimalApi.Repository.IRepository;
 using MinimalApi.Utilities;
 using System.Net;
-using System.Net.NetworkInformation;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MinimalApi.Endpoints;
 
@@ -16,20 +16,29 @@ public static class CategoryEndpoints
     {
         app.MapGet("/api/categories", getAll).WithName("GetCategories")
         .Produces<List<ApiResponse>>(StatusCodes.Status200OK)
-        .RequireAuthorization();
+        .Produces<List<ApiResponse>>(StatusCodes.Status401Unauthorized).Produces<List<ApiResponse>>(StatusCodes.Status403Forbidden)
+        .RequireAuthorization(Constants.Role_Admin);
 
         app.MapGet("/api/category/{id:int}", get).WithName("GetCategory")
-            .Produces<ApiResponse>(StatusCodes.Status200OK).Produces<ApiResponse>(StatusCodes.Status404NotFound).Produces<ApiResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ApiResponse>(StatusCodes.Status200OK).Produces<ApiResponse>(StatusCodes.Status404NotFound).Produces<ApiResponse>(StatusCodes.Status400BadRequest)
+            .Produces<List<ApiResponse>>(StatusCodes.Status401Unauthorized).Produces<List<ApiResponse>>(StatusCodes.Status403Forbidden)
+            .RequireAuthorization(Constants.Role_Admin);
 
         app.MapPost("/api/category", create).WithName("CreateCategory").Accepts<CategoryCreateDto>("application/json")
             .Produces<ApiResponse>(StatusCodes.Status200OK) //.Produces<ApiResponse>(StatusCodes.Status201Created)
-            .Produces<ApiResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ApiResponse>(StatusCodes.Status400BadRequest)
+            .Produces<List<ApiResponse>>(StatusCodes.Status401Unauthorized).Produces<List<ApiResponse>>(StatusCodes.Status403Forbidden)
+            .RequireAuthorization(Constants.Role_Admin);
 
         app.MapPut("/api/category", update).WithName("UpdateCategory").Accepts<CategoryUpdateDto>("application/json")
-            .Produces<ApiResponse>(StatusCodes.Status200OK).Produces<ApiResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ApiResponse>(StatusCodes.Status200OK).Produces<ApiResponse>(StatusCodes.Status400BadRequest)
+            .Produces<List<ApiResponse>>(StatusCodes.Status401Unauthorized).Produces<List<ApiResponse>>(StatusCodes.Status403Forbidden)
+            .RequireAuthorization(Constants.Role_Admin);
 
         app.MapDelete("/api/category/{id:int}", delete).WithName("DeleteCategory")
-            .Produces<ApiResponse>(StatusCodes.Status204NoContent).Produces<ApiResponse>(StatusCodes.Status404NotFound).Produces<ApiResponse>(StatusCodes.Status400BadRequest);
+            .Produces<ApiResponse>(StatusCodes.Status204NoContent).Produces<ApiResponse>(StatusCodes.Status404NotFound).Produces<ApiResponse>(StatusCodes.Status400BadRequest)
+            .Produces<List<ApiResponse>>(StatusCodes.Status401Unauthorized).Produces<List<ApiResponse>>(StatusCodes.Status403Forbidden)
+            .RequireAuthorization(Constants.Role_Admin);
     }
 
     private static async Task<IResult> getAll(ICategoryRepository _repo, ILogger<Program> _logger, IMapper _mapper)
@@ -45,6 +54,7 @@ public static class CategoryEndpoints
         return Results.Ok(apiResponse);
     }
 
+    //[Authorize(Roles = Constants.Role_Admin)]
     private static async Task<IResult> get(ICategoryRepository _repo, int id, ILogger<Program> _logger, IMapper _mapper)
     {
         _logger.Log(LogLevel.Information, $">>> Get /api/category/{id}");
