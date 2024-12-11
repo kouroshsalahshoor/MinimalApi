@@ -27,17 +27,17 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<List<Category>> Get()
     {
-        return await _db.Categories.ToListAsync();
+        return await _db.Categories.AsNoTracking().ToListAsync();
     }
 
     public async Task<Category?> Get(int id)
     {
-        return await _db.Categories.FirstOrDefaultAsync(x => x.Id == id);
+        return await _db.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
     }
 
     public async Task<Category?> Get(string name)
     {
-        return await _db.Categories.FirstOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
+        return await _db.Categories.AsNoTracking().FirstOrDefaultAsync(x => x.Name.ToLower() == name.ToLower());
     }
 
     public async Task Update(Category model)
