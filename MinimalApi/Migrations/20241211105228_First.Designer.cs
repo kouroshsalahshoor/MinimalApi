@@ -12,8 +12,8 @@ using MinimalApi.Data;
 namespace MinimalApi.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20241211084908_ApplicationUser")]
-    partial class ApplicationUser
+    [Migration("20241211105228_First")]
+    partial class First
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -205,9 +205,6 @@ namespace MinimalApi.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("Role")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");

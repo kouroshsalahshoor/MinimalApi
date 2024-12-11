@@ -75,6 +75,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 //builder.Services.AddScoped<IValidator<CategoryCreateDto>, CategoryCreateValidation>();
 
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IAuthRepository, AuthRepository>();
 
 var app = builder.Build();
 
@@ -92,11 +93,10 @@ using (var scope = app.Services.CreateScope())
     await dbInitializer.Initialize();
 }
 
+//app.UseAuthentication();
+//app.UseAuthorization();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
-
+app.ConfigureAuthEndpoints();
 app.ConfigureCategoryEndpoints();
 app.ConfigureDemoEndpoints();
 

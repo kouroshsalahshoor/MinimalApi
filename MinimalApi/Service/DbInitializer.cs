@@ -40,7 +40,7 @@ public class DbInitializer : IDbInitializer
 
             var adminUser = new ApplicationUser()
             {
-                UserName = "admin@x.x",
+                UserName = "admin",
                 Email = "admin@x.x",
                 FirstName = "system",
                 LastName = "admin",

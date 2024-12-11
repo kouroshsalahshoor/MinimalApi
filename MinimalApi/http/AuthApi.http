@@ -1,0 +1,22 @@
+@MinimalApi_HostAddress = https://localhost:7153
+
+Post {{MinimalApi_HostAddress}}/api/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "1",
+  "password" : "1",
+  "email" : "1@x.x",
+  "role" : "User"
+}
+
+###
+Post {{MinimalApi_HostAddress}}/api/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "username": "1",
+  "password" : "1"
+}
